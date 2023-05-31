@@ -93,7 +93,7 @@ module.exports = new SmartApp()
     let [startDay, startMonth, startYear] = startDate.split('/');
     startDay = String(startDay).padStart(2,'0');
     startMonth = String(startMonth).padStart(2,'0');
-    const cronExpression1 = `39 13 ${startDay} ${startMonth} ? ${startYear}`;
+    const cronExpression1 = `00 00 ${startDay} ${startMonth} ? ${startYear}`;
 
     const endDate = context.config.endDate[0].stringConfig.value;
     let [endDay, endMonth, endYear] = endDate.split('/');
