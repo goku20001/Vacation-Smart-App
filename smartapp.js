@@ -34,6 +34,7 @@ const randomlySwitchLights = async context => {
   const status = await context.api.devices.getStatus(deviceId);
   const value = status.components.main.switch.switch.value;
 
+  //Toggle the light switch
   if(value === "off"){
     turnOnLight(context, deviceId);
   }
@@ -93,13 +94,13 @@ module.exports = new SmartApp()
     let [startDay, startMonth, startYear] = startDate.split('/');
     startDay = String(startDay).padStart(2,'0');
     startMonth = String(startMonth).padStart(2,'0');
-    const cronExpression1 = `00 00 ${startDay} ${startMonth} ? ${startYear}`;
+    const cronExpression1 = `00 00 ${startDay} ${startMonth} ? ${startYear}`; // Schedule for midnight
 
     const endDate = context.config.endDate[0].stringConfig.value;
     let [endDay, endMonth, endYear] = endDate.split('/');
     endDay = String(endDay).padStart(2,'0');
     endMonth = String(endMonth).padStart(2,'0');
-    const cronExpression2 = `59 23 ${endDay} ${endMonth} ? ${endYear}`;
+    const cronExpression2 = `59 23 ${endDay} ${endMonth} ? ${endYear}`; // Schedule for just before midnight
 
     // Schedules
     await context.api.schedules.schedule(
@@ -116,6 +117,8 @@ module.exports = new SmartApp()
     
   })
 
+  // For scheduling events at startTime and endTime(during which randomized lights turning on/off occurs)
+  // Triggers at 00:00 AM of the first day of vacation
   .scheduledEventHandler('scheduleTimings', async (context, event) => {
     console.log("I am inside scheduleTimings".yellow);
 
@@ -149,11 +152,14 @@ module.exports = new SmartApp()
     );
   })
 
+
+  // Triggers at 11:59 PM of the last day of vacation
   .scheduledEventHandler('deScheduleEverything', async (context, event) => {
     console.log("I am inside deScheduleEverything".yellow);
     await context.api.schedules.delete();
   })
 
+    // Triggers at startTime every day of the vacation
   .scheduledEventHandler('scheduleRandomization', async (context, event) => {
     console.log("I am inside scheduleRandomization".yellow);
     await context.api.schedules.schedule(
@@ -163,11 +169,13 @@ module.exports = new SmartApp()
       );
   })
 
+    // Triggers at endTime every day of the vacation
   .scheduledEventHandler('deScheduleRandomization', async (context, event) => {
     console.log("I am inside deScheduleRandomization".yellow);
     await context.api.schedules.delete('randomizedEventScheduler');
   })
 
+  // Triggers every minute in the time interval [startTime, endTime]
   .scheduledEventHandler('randomizedEventScheduler', async (context, event) => {
     console.log("I am inside randomizedEventScheduler".yellow);
     randomlySwitchLights(context);
