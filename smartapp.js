@@ -1,6 +1,13 @@
 const SmartApp = require('@smartthings/smartapp');
 
-const rooms = [];
+const devices = [];
+
+const getSelectedDevices = arr => {
+  devices.length = 0;
+  for(let item of arr){
+    devices.push(item.deviceConfig.deviceId);
+  }
+}
 
 const turnOnLight = async (context, deviceId) => {
   await context.api.devices.executeCommand(deviceId,
@@ -21,14 +28,9 @@ const turnOffLight = async (context, deviceId) => {
 }
 
 const randomlySwitchLights = async context => {
-  //Select a room randomly
-  let n = rooms.length;
-  let indx = Math.floor(Math.random() * n);
 
-  const {roomId, devices} = rooms[indx];
-
-  //Select a light within this room randomly
-  n = devices.length;
+  //Select a light randomly
+  const n = devices.length;
   indx = Math.floor(Math.random() * n);
   const deviceId = devices[indx];
   const status = await context.api.devices.getStatus(deviceId);
@@ -86,25 +88,27 @@ const smartApp = new SmartApp()
       section
         .timeSetting('endTime')
         .required(true);
+      section
+        .deviceSetting('colorLights')
+        .capabilities(['switch'])
+        .permissions('rx')
+        .required(true)
+        .multiple(true);
 
     });
   })
   .updated(async (context, updateData) => {
     // Updated defines what code to run when the SmartApp is installed or the settings are updated by the user.
-    console.log('I am inside updated lifecycle event'.yellow);
 
-    const data = await context.api.rooms.list();
-
-    for (const room of data) {
-      const { roomId } = room;
-      const devicesData = await context.api.rooms.listDevices(roomId);
-      const devices = devicesData.map(item => item.deviceId);
-      rooms.push({ roomId, devices });
-    }
-
-     // Clear any existing configuration.
+    // Clear any existing configuration.
     await context.api.schedules.delete()
     await context.api.subscriptions.delete();
+
+    console.log('I am inside updated lifecycle event'.yellow);
+
+    getSelectedDevices(context.config.colorLights);
+
+    console.log(devices);
 
     const startDate = context.config.startDate[0].stringConfig.value;
     let [startDay, startMonth, startYear] = extractDayMonthYear(startDate);
@@ -187,8 +191,10 @@ const smartApp = new SmartApp()
   })
 
 
-  module.exports.smartApp = smartApp;
-  module.exports.turnOnLight = turnOnLight;
-  module.exports.turnOffLight = turnOffLight;
-  module.exports.extractDayMonthYear = extractDayMonthYear;
-  module.exports.extractHourMinute = extractHourMinute;
+  module.exports = {
+    smartApp, 
+    turnOnLight, 
+    turnOffLight, 
+    extractDayMonthYear, 
+    extractHourMinute
+  };

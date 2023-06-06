@@ -12,7 +12,7 @@
 	"pages.mainPage.settings.lightCheckDuration.options.1 Minute.name": "1 Minutes",
 	"pages.mainPage.settings.lightCheckDuration.options.2 Minutes.name": "2 Minutes",
 	"pages.mainPage.settings.lightCheckDuration.options.5 Minutes.name": "5 Minutes",
-	"pages.mainPage.sections.colorLights.name": "Choose which light to control.",
-	"pages.mainPage.settings.colorLights.name": "Light to control",
+	"pages.mainPage.sections.colorLights.name": "Choose which devices to control.",
+	"pages.mainPage.settings.colorLights.name": "Devices to control",
 	"Tap to set": "Tap to set"
 }
