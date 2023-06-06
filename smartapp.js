@@ -43,9 +43,26 @@ const randomlySwitchLights = async context => {
   }
 }
 
+const extractDayMonthYear = date => {
+    let [day, month, year] = date.split('/');
+    day = String(day).padStart(2,'0');
+    month = String(month).padStart(2,'0');
+    return [day, month, year];
+}
+
+const extractHourMinute = time => {
+    const options = { timeZone: 'Asia/Kolkata', hour12: false };
+    let date = new Date(time);
+    let hours = date.toLocaleString('en-US', { ...options, hour: '2-digit' });
+    let minutes = date.toLocaleString('en-US', { ...options, minute: '2-digit' });
+    hours = String(hours).padStart(2,'0');
+    minutes = String(minutes).padStart(2,'0');
+    return [hours, minutes];
+}
+
 
 /* Define the SmartApp */
-module.exports = new SmartApp()
+const smartApp = new SmartApp()
   .configureI18n({updateFiles: true}) // Enable translations and update translation file when new items are added.
   .enableEventLogging(2) // Logging for testing.
   .appId("my-app-id")
@@ -90,16 +107,11 @@ module.exports = new SmartApp()
     await context.api.subscriptions.delete();
 
     const startDate = context.config.startDate[0].stringConfig.value;
-
-    let [startDay, startMonth, startYear] = startDate.split('/');
-    startDay = String(startDay).padStart(2,'0');
-    startMonth = String(startMonth).padStart(2,'0');
+    let [startDay, startMonth, startYear] = extractDayMonthYear(startDate);
     const cronExpression1 = `00 00 ${startDay} ${startMonth} ? ${startYear}`; // Schedule for midnight
 
     const endDate = context.config.endDate[0].stringConfig.value;
-    let [endDay, endMonth, endYear] = endDate.split('/');
-    endDay = String(endDay).padStart(2,'0');
-    endMonth = String(endMonth).padStart(2,'0');
+    let [endDay, endMonth, endYear] = extractDayMonthYear(endDate);
     const cronExpression2 = `59 23 ${endDay} ${endMonth} ? ${endYear}`; // Schedule for just before midnight
 
     // Schedules
@@ -123,18 +135,11 @@ module.exports = new SmartApp()
     console.log("I am inside scheduleTimings".yellow);
 
     const startTime = context.config.startTime[0].stringConfig.value;
-
-    const options = { timeZone: 'Asia/Kolkata', hour12: false };
-
-    let date = new Date(startTime);
-    const startHour = date.toLocaleString('en-US', { ...options, hour: '2-digit' });
-    const startMinute = date.toLocaleString('en-US', { ...options, minute: '2-digit' });
+    const [startHour, startMinute] = extractHourMinute(startTime)
     const cronExpression1 = `${startMinute} ${startHour} * * ? *`;
 
     const endTime = context.config.endTime[0].stringConfig.value;
-    date = new Date(endTime);
-    const endHour = date.toLocaleString('en-US', { ...options, hour: '2-digit' });
-    const endMinute = date.toLocaleString('en-US', { ...options, minute: '2-digit' });
+    const [endHour, endMinute] = extractHourMinute(endTime);
     const cronExpression2 = `${endMinute} ${endHour} * * ? *`;
 
 
@@ -180,3 +185,10 @@ module.exports = new SmartApp()
     console.log("I am inside randomizedEventScheduler".yellow);
     randomlySwitchLights(context);
   })
+
+
+  module.exports.smartApp = smartApp;
+  module.exports.turnOnLight = turnOnLight;
+  module.exports.turnOffLight = turnOffLight;
+  module.exports.extractDayMonthYear = extractDayMonthYear;
+  module.exports.extractHourMinute = extractHourMinute;
