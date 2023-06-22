@@ -1,4 +1,4 @@
-# Vaction Smart App
+# Vacation Smart App
 
 The Vaction Smart App is a SmartThings integration that randomly turns on/off lights in the house and controls the TV at specified times to create the illusion that someone is home even when the user is on vacation.
 
