@@ -17,3 +17,9 @@ The Vaction Smart App is a SmartThings integration that randomly turns on/off li
 <br><br>
 <img src="https://github.com/goku20001/Vacation-Smart-App/assets/98842207/0ac9d9fc-49e1-4a75-8e18-8198c111fd7e" height="30%" width="30%">
 
+
+## Screen Recording
+
+
+https://github.com/goku20001/Vacation-Smart-App/assets/98842207/8d87579d-9170-4ef4-b01b-833664fb5f92
+
