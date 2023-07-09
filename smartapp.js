@@ -1,15 +1,28 @@
 const SmartApp = require('@smartthings/smartapp');
 
-const devices = [];
+const lights = [];
+const tvs = [];
 
-const getSelectedDevices = arr => {
-  devices.length = 0;
+const getSelectedDevices = async context => {
+  const arr = context.config.devices;
+
+  lights.length = 0;
+  tvs.length = 0;
+
   for(let item of arr){
-    devices.push(item.deviceConfig.deviceId);
+    const deviceID = item.deviceConfig.deviceId;
+    const deviceData = await context.api.devices.get(deviceID);
+    const deviceType = deviceData.components[0].categories[0].name;
+    if(deviceType === "Light"){
+      lights.push(deviceID);
+    }
+    else if(deviceType === "Television"){
+      tvs.push(deviceID);
+    }
   }
 }
 
-const turnOnLight = async (context, deviceId) => {
+const turnOnDevice = async (context, deviceId) => {
   await context.api.devices.executeCommand(deviceId,
     {
       capability: "switch",
@@ -18,7 +31,7 @@ const turnOnLight = async (context, deviceId) => {
   );
 }
 
-const turnOffLight = async (context, deviceId) => {
+const turnOffDevice = async (context, deviceId) => {
   await context.api.devices.executeCommand(deviceId,
     {
       capability: "switch",
@@ -30,18 +43,18 @@ const turnOffLight = async (context, deviceId) => {
 const randomlySwitchLights = async context => {
 
   //Select a light randomly
-  const n = devices.length;
+  const n = lights.length;
   indx = Math.floor(Math.random() * n);
-  const deviceId = devices[indx];
+  const deviceId = lights[indx];
   const status = await context.api.devices.getStatus(deviceId);
   const value = status.components.main.switch.switch.value;
 
   //Toggle the light switch
   if(value === "off"){
-    turnOnLight(context, deviceId);
+    turnOnDevice(context, deviceId);
   }
   else{
-    turnOffLight(context, deviceId);
+    turnOffDevice(context, deviceId);
   }
 }
 
@@ -75,7 +88,7 @@ const smartApp = new SmartApp()
   ])
   .page('mainPage', (context, page, configData) => {
 
-    page.section('vacation', section => {
+    page.section('lights', section => {
       section
         .textSetting('startDate')
         .required(true);
@@ -89,13 +102,22 @@ const smartApp = new SmartApp()
         .timeSetting('endTime')
         .required(true);
       section
-        .deviceSetting('colorLights')
+        .deviceSetting('devices')
         .capabilities(['switch'])
         .permissions('rx')
         .required(true)
         .multiple(true);
 
     });
+
+    page.section('television', section => {
+      section
+        .timeSetting('tvOnTime')
+        .required(true)
+      section
+        .timeSetting('tvOffTime')
+        .required(true)
+    })
   })
   .updated(async (context, updateData) => {
     // Updated defines what code to run when the SmartApp is installed or the settings are updated by the user.
@@ -106,17 +128,15 @@ const smartApp = new SmartApp()
 
     console.log('I am inside updated lifecycle event'.yellow);
 
-    getSelectedDevices(context.config.colorLights);
-
-    console.log(devices);
+    await getSelectedDevices(context);
 
     const startDate = context.config.startDate[0].stringConfig.value;
     let [startDay, startMonth, startYear] = extractDayMonthYear(startDate);
-    const cronExpression1 = `00 00 ${startDay} ${startMonth} ? ${startYear}`; // Schedule for midnight
+    const cronExpression1 = `01 13 ${startDay} ${startMonth} ? ${startYear}`; // Schedule for midnight
 
     const endDate = context.config.endDate[0].stringConfig.value;
     let [endDay, endMonth, endYear] = extractDayMonthYear(endDate);
-    const cronExpression2 = `59 23 ${endDay} ${endMonth} ? ${endYear}`; // Schedule for just before midnight
+    const cronExpression2 = `59 13 ${endDay} ${endMonth} ? ${endYear}`; // Schedule for just before midnight
 
     // Schedules
     await context.api.schedules.schedule(
@@ -133,18 +153,26 @@ const smartApp = new SmartApp()
     
   })
 
-  // For scheduling events at startTime and endTime(during which randomized lights turning on/off occurs)
+  // For scheduling events at startTime and endTime(during which randomized lights turning on/off occurs and tv on/off time)
   // Triggers at 00:00 AM of the first day of vacation
   .scheduledEventHandler('scheduleTimings', async (context, event) => {
     console.log("I am inside scheduleTimings".yellow);
 
     const startTime = context.config.startTime[0].stringConfig.value;
-    const [startHour, startMinute] = extractHourMinute(startTime)
+    let [startHour, startMinute] = extractHourMinute(startTime)
     const cronExpression1 = `${startMinute} ${startHour} * * ? *`;
 
     const endTime = context.config.endTime[0].stringConfig.value;
-    const [endHour, endMinute] = extractHourMinute(endTime);
+    let [endHour, endMinute] = extractHourMinute(endTime);
     const cronExpression2 = `${endMinute} ${endHour} * * ? *`;
+
+    const tvOnTime = context.config.tvOnTime[0].stringConfig.value;
+    [startHour, startMinute] = extractHourMinute(tvOnTime)
+    const cronExpression3 = `${startMinute} ${startHour} * * ? *`;
+
+    const tvOffTime = context.config.tvOffTime[0].stringConfig.value;
+    [startHour, startMinute] = extractHourMinute(tvOffTime)
+    const cronExpression4 = `${startMinute} ${startHour} * * ? *`;
 
 
     // Schedules
@@ -157,6 +185,18 @@ const smartApp = new SmartApp()
     await context.api.schedules.schedule(
       'deScheduleRandomization',
       cronExpression2,
+      'Asia/Kolkata'
+    );
+
+    await context.api.schedules.schedule(
+      'scheduleTvOnTime',
+      cronExpression3,
+      'Asia/Kolkata'
+    );
+
+    await context.api.schedules.schedule(
+      'scheduleTvOffTime',
+      cronExpression4,
       'Asia/Kolkata'
     );
   })
@@ -190,11 +230,23 @@ const smartApp = new SmartApp()
     randomlySwitchLights(context);
   })
 
+  // Triggers at tvOnTime every day of the vacation
+  .scheduledEventHandler('scheduleTvOnTime', async (context, event) => {
+    console.log("I am inside scheduleTvOnTime".yellow);
+    turnOnDevice(context, tvs[0]);
+  })
+
+  // Triggers at tvOffTime every day of the vacation
+  .scheduledEventHandler('scheduleTvOffTime', async (context, event) => {
+    console.log("I am inside scheduleTvOffTime".yellow);
+    turnOffDevice(context, tvs[0]);
+  })
+
 
   module.exports = {
     smartApp, 
-    turnOnLight, 
-    turnOffLight, 
+    turnOnDevice, 
+    turnOffDevice, 
     extractDayMonthYear, 
     extractHourMinute
   };

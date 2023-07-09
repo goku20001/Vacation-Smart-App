@@ -1,18 +1,18 @@
 {
 	"pages.mainPage.name": "Vacation Page",
-	"pages.mainPage.sections.checkDuration.name": "How often to make color changes.",
-	"pages.mainPage.sections.vacation.name": "Vacation Settings",
+	"pages.mainPage.sections.lights.name": "Light Settings",
+	"pages.mainPage.sections.television.name": "TV Settings",
 	"pages.mainPage.settings.startDate.name": "Start Date",
 	"pages.mainPage.settings.endDate.name": "End Date",
 	"pages.mainPage.settings.startTime.name": "Start Time",
+	"pages.mainPage.settings.tvOnTime.name": "TV On Time",
+	"pages.mainPage.settings.tvOffTime.name": "TV Off Time",
 	"pages.mainPage.settings.endTime.name": "End Time",
 	"pages.mainPage.settings.startTime.description": "Tap to set",
 	"pages.mainPage.settings.endTime.description": "Tap to set",
-	"pages.mainPage.settings.lightCheckDuration.name": "Check duration",
-	"pages.mainPage.settings.lightCheckDuration.options.1 Minute.name": "1 Minutes",
-	"pages.mainPage.settings.lightCheckDuration.options.2 Minutes.name": "2 Minutes",
-	"pages.mainPage.settings.lightCheckDuration.options.5 Minutes.name": "5 Minutes",
 	"pages.mainPage.sections.colorLights.name": "Choose which devices to control.",
-	"pages.mainPage.settings.colorLights.name": "Devices to control",
-	"Tap to set": "Tap to set"
+	"pages.mainPage.settings.devices.name": "Devices to control",
+	"Tap to set": "Tap to set",
+	"pages.mainPage.settings.tvOnTime.description": "Tap to set",
+	"pages.mainPage.settings.tvOffTime.description": "Tap to set"
 }
